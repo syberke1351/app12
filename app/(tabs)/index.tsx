@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { BookOpen, Award, Users, TrendingUp, Calendar, Star, Trophy, Clock, Target, CirclePlus as PlusCircle, Heart, CheckCircle, Gift, ExternalLink, CircleX, Camera, FileText, Settings, ChartBar as BarChart3, MapPin, User } from 'lucide-react-native';
+import { BookOpen, Award, Users, TrendingUp, Calendar, Star, Trophy, Clock, Target, CirclePlus as PlusCircle, Heart, CircleCheck as CheckCircle, Gift, ExternalLink, CircleX, Camera, FileText, Settings, ChartBar as BarChart3, MapPin, User } from 'lucide-react-native';
 import React, { useEffect, useState, useRef } from 'react';
 import { Dimensions, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, TouchableOpacity, Linking } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, SlideInRight } from 'react-native-reanimated';

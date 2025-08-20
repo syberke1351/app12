@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Dimensio
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Calendar, CircleCheck as CheckCircle, Circle as XCircle, Clock, User, ChartBar as BarChart3, MapPin, Download, Filter, X, FileText } from 'lucide-react-native';
+import { Calendar, CircleCheck as CheckCircle, Circle as XCircle, Clock, User, ChartBar as BarChart3, MapPin, Download, ListFilter as Filter, X, FileText } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as FileSystem from 'expo-file-system';
