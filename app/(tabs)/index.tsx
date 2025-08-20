@@ -3,9 +3,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { BookOpen, Award, Users, TrendingUp, Calendar, Star, Trophy, Clock, Target, CirclePlus as PlusCircle, Heart,CheckCircle, Gift, ExternalLink,CircleX, Camera, FileText, Settings, ChartBar as BarChart3, MapPin } from 'lucide-react-native';
-import React, { useEffect, useState,useRef } from 'react';
-import { Dimensions, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View,TouchableOpacity } from 'react-native';
+import { BookOpen, Award, Users, TrendingUp, Calendar, Star, Trophy, Clock, Target, CirclePlus as PlusCircle, Heart, CheckCircle, Gift, ExternalLink, CircleX, Camera, FileText, Settings, ChartBar as BarChart3, MapPin, User } from 'lucide-react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { Dimensions, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, TouchableOpacity, Linking } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, SlideInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
@@ -23,7 +23,7 @@ interface DashboardStats {
   recentActivity?: any[];
   hafalanProgress?: number;
   murojaahProgress?: number;
-   attendanceStats?: {
+  attendanceStats?: {
     totalStudents: number;
     presentToday: number;
     absentToday: number;
@@ -38,31 +38,36 @@ interface PrayerTimes {
   maghrib: string;
   isha: string;
 }
+
 const banners = [
   {
     id: "1",
     title: "💝 Wakaf Al-Quran",
     subtitle: "Berbagi pahala dengan mewakafkan Al-Quran",
-    image: "https://app.rumahamal.org/storage/assets/salman/crowdfunding/YqRaBbtwwyEl4qKh3rilGP7oGMjQsk9Z5vyEq43z.jpeg",
-    link: "https://www.rumahamal.org/project/wakaf_alquran_di_bulan_turunya_alquran"
+    image: "https://images.pexels.com/photos/8111357/pexels-photo-8111357.jpeg?auto=compress&cs=tinysrgb&w=800",
+    link: "https://www.rumahamal.org/project/wakaf_alquran_di_bulan_turunya_alquran",
+    gradient: ['#059669', '#10B981']
   },
   {
     id: "2",
-    title: "📖 Donasi Buku",
-    subtitle: "Bantu anak yatim mendapatkan ilmu",
-    image: "https://lazismudiy.or.id/wp-content/uploads/2024/03/Buku-4.jpg",
-    link: "https://lazismudiy.or.id/campaign/donasi-buku"
+    title: "📖 Donasi Pendidikan",
+    subtitle: "Bantu anak yatim mendapatkan pendidikan",
+    image: "https://images.pexels.com/photos/8613089/pexels-photo-8613089.jpeg?auto=compress&cs=tinysrgb&w=800",
+    link: "https://lazismudiy.or.id/campaign/donasi-buku",
+    gradient: ['#3B82F6', '#6366F1']
   },
   {
     id: "3",
     title: "🤲 Infaq Jumat",
-    subtitle: "Sedekah terbaik di hari Jumat",
-    image: "https://amalsholeh-s3.imgix.net/cover/mcm5rOSCWdhAEZNtggcVlIYdD3LuJB9be2ZA6WYy.jpg",
-    link: "https://www.amalsholeh.com/infaq-shodaqoh-jum-at-masjid-muhajirin/seru"
+    subtitle: "Sedekah terbaik di hari yang berkah",
+    image: "https://images.pexels.com/photos/8111120/pexels-photo-8111120.jpeg?auto=compress&cs=tinysrgb&w=800",
+    link: "https://www.amalsholeh.com/infaq-shodaqoh-jum-at-masjid-muhajirin/seru",
+    gradient: ['#8B5CF6', '#A855F7']
   }
 ];
+
 export default function HomeScreen() {
-    const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
+  const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
   const [locationName, setLocationName] = useState('');
   const [nextPrayer, setNextPrayer] = useState<{ name: string; time: string; timeLeft: string } | null>(null);
   const flatListRef = useRef<FlatList>(null);
@@ -73,34 +78,23 @@ export default function HomeScreen() {
   const [stats, setStats] = useState<DashboardStats>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
   useEffect(() => {
     const interval = setInterval(() => {
       let nextIndex = currentIndex + 1;
       if (nextIndex >= banners.length) nextIndex = 0;
       flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
       setCurrentIndex(nextIndex);
-    }, 4000); // 4 detik
+    }, 5000);
     return () => clearInterval(interval);
   }, [currentIndex, banners.length]);
- const handleScroll = (event: any) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / (width * 0.7));
+
+  const handleScroll = (event: any) => {
+    const index = Math.round(event.nativeEvent.contentOffset.x / (width * 0.85));
     setCurrentIndex(index);
   };
 
-  const goToPrev = () => {
-    let prevIndex = currentIndex - 1;
-    if (prevIndex < 0) prevIndex = banners.length - 1;
-    flatListRef.current?.scrollToIndex({ index: prevIndex, animated: true });
-    setCurrentIndex(prevIndex);
-  };
-
-  const goToNext = () => {
-    let nextIndex = currentIndex + 1;
-    if (nextIndex >= banners.length) nextIndex = 0;
-    flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-    setCurrentIndex(nextIndex);
-  };
-   const getPrayerTimes = async () => {
+  const getPrayerTimes = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
@@ -127,7 +121,6 @@ export default function HomeScreen() {
         };
         setPrayerTimes(prayers);
         
-        // Calculate next prayer
         const now = dayjs();
         const prayerList = [
           { name: 'Subuh', time: prayers.fajr },
@@ -153,6 +146,7 @@ export default function HomeScreen() {
       console.error('Error getting prayer times:', error);
     }
   };
+
   const fetchDashboardData = async () => {
     if (!profile) return;
 
@@ -171,7 +165,7 @@ export default function HomeScreen() {
           await fetchAdminStats();
           break;
       }
-       await getPrayerTimes();
+      await getPrayerTimes();
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -181,21 +175,18 @@ export default function HomeScreen() {
   };
 
   const fetchSiswaStats = async () => {
-    // Get student points
     const { data: pointsData } = await supabase
       .from('siswa_poin')
       .select('*')
       .eq('siswa_id', profile?.id)
       .single();
 
-    // Get setoran stats
     const { data: setoranData } = await supabase
       .from('setoran')
       .select('*')
       .eq('siswa_id', profile?.id)
       .order('created_at', { ascending: false });
 
-    // Get labels count
     const { data: labelsData } = await supabase
       .from('labels')
       .select('*')
@@ -220,20 +211,18 @@ export default function HomeScreen() {
   };
 
   const fetchGuruStats = async () => {
-    // Get pending setoran count
     const { count: pendingCount } = await supabase
       .from('setoran')
       .select('*', { count: 'exact', head: true })
       .eq('organize_id', profile?.organize_id)
       .eq('status', 'pending');
 
-    // Get total students in organize
     const { count: siswaCount } = await supabase
       .from('users')
       .select('*', { count: 'exact', head: true })
       .eq('organize_id', profile?.organize_id)
       .eq('role', 'siswa');
-  // Get today's attendance stats
+
     const today = new Date().toISOString().split('T')[0];
     const { data: studentsData } = await supabase
       .from('users')
@@ -261,12 +250,11 @@ export default function HomeScreen() {
             case 'tidak_hadir': absentToday++; break;
           }
         } else {
-          absentToday++; // Default to absent if no record
+          absentToday++;
         }
       }
     }
 
-    // Get recent setoran for review
     const { data: recentSetoran } = await supabase
       .from('setoran')
       .select(`
@@ -282,7 +270,7 @@ export default function HomeScreen() {
       setoranPending: pendingCount || 0,
       totalSiswa: siswaCount || 0,
       recentActivity: recentSetoran || [],
-         attendanceStats: {
+      attendanceStats: {
         totalStudents: siswaCount || 0,
         presentToday,
         absentToday,
@@ -292,7 +280,6 @@ export default function HomeScreen() {
   };
 
   const fetchOrtuStats = async () => {
-    // Get children progress
     const { data: childrenData } = await supabase
       .from('users')
       .select('id, name')
@@ -300,7 +287,7 @@ export default function HomeScreen() {
       .eq('role', 'siswa');
 
     if (childrenData && childrenData.length > 0) {
-      const childId = childrenData[0].id; // For demo, take first child
+      const childId = childrenData[0].id;
       
       const { data: setoranData } = await supabase
         .from('setoran')
@@ -312,7 +299,7 @@ export default function HomeScreen() {
         .select('*')
         .eq('siswa_id', childId)
         .single();
- // Get child's attendance stats
+
       const today = new Date().toISOString().split('T')[0];
       const { data: attendanceData } = await supabase
         .from('attendance')
@@ -322,13 +309,14 @@ export default function HomeScreen() {
 
       const presentCount = attendanceData?.filter(a => a.status === 'hadir').length || 0;
       const totalDays = attendanceData?.length || 0;
+
       setStats({
         totalSetoran: setoranData?.length || 0,
         setoranDiterima: setoranData?.filter(s => s.status === 'diterima').length || 0,
         setoranPending: setoranData?.filter(s => s.status === 'pending').length || 0,
         totalPoin: pointsData?.total_poin || 0,
         recentActivity: setoranData?.slice(0, 3) || [],
-          attendanceStats: {
+        attendanceStats: {
           totalStudents: 1,
           presentToday: presentCount,
           absentToday: totalDays - presentCount,
@@ -339,7 +327,6 @@ export default function HomeScreen() {
   };
 
   const fetchAdminStats = async () => {
-    // Get system-wide stats
     const { count: usersCount } = await supabase
       .from('users')
       .select('*', { count: 'exact', head: true });
@@ -381,9 +368,9 @@ export default function HomeScreen() {
     }
   };
 
-const handlePress = (link: string) => {
-  console.log("Open link:", link);
-};
+  const handleBannerPress = (link: string) => {
+    Linking.openURL(link);
+  };
 
   return (
     <ScrollView 
@@ -393,95 +380,125 @@ const handlePress = (link: string) => {
       }
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
+      {/* Enhanced Header */}
       <Animated.View entering={FadeInUp}>
-        <View style={[styles.header, { marginBottom: 20 }]}>
-          <LinearGradient
-          colors={['#00A86B', '#008B5A']}
-            style={styles.headerGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <View style={styles.headerContent}>
-              <View style={styles.headerLeft}>
-                <AppLogo size="small" showText={false} />
-                <View style={styles.greetingContainer}>
-                  <Text style={styles.greeting}>{getGreeting()}</Text>
-                  <Text style={styles.userName}>{profile?.name}</Text>
-                  <Text style={styles.userRole}>{getRoleName(profile?.role || '')}</Text>
-                </View>
-              </View>
-              <View style={styles.headerRight}>
-                <View style={styles.profilePicture}>
-                  <Text style={styles.profileInitial}>
-                    {profile?.name?.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
+        <LinearGradient
+          colors={['#1E40AF', '#3B82F6', '#60A5FA']}
+          style={styles.headerGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft}>
+              <AppLogo size="small" showText={false} />
+              <View style={styles.greetingContainer}>
+                <Text style={styles.greeting}>{getGreeting()}</Text>
+                <Text style={styles.userName}>{profile?.name}</Text>
+                <Text style={styles.userRole}>{getRoleName(profile?.role || '')}</Text>
               </View>
             </View>
-          </LinearGradient>
-        </View>
+            <Pressable 
+              style={styles.profileButton}
+              onPress={() => router.push('/(tabs)/profile')}
+            >
+              <LinearGradient
+                colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']}
+                style={styles.profilePicture}
+              >
+                <Text style={styles.profileInitial}>
+                  {profile?.name?.charAt(0).toUpperCase()}
+                </Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </LinearGradient>
       </Animated.View>
 
       <View style={styles.content}>
- {/* Prayer Times Card */}
+        {/* Prayer Times Card - Enhanced Single Row */}
         {prayerTimes && (
-         <Animated.View entering={FadeInUp.delay(150)} style={styles.container}>
-      {/* Kubah Masjid */}
-      <LinearGradient colors={['#059669', '#10B981']} style={styles.kubah}>
-        <Clock size={24} color="white" />
-        <Text style={styles.title}>Jadwal Sholat</Text>
-        <MapPin size={18} color="white" />
-      </LinearGradient>
+          <Animated.View entering={FadeInUp.delay(150)} style={styles.prayerCard}>
+            <LinearGradient
+              colors={['#059669', '#10B981']}
+              style={styles.prayerGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <View style={styles.prayerHeader}>
+                <View style={styles.prayerTitleContainer}>
+                  <Clock size={20} color="white" />
+                  <Text style={styles.prayerTitle}>Jadwal Sholat</Text>
+                </View>
+                <View style={styles.locationContainer}>
+                  <MapPin size={16} color="white" />
+                  <Text style={styles.locationText}>{locationName}</Text>
+                </View>
+              </View>
+              
+              {nextPrayer && (
+                <View style={styles.nextPrayerBanner}>
+                  <Text style={styles.nextPrayerLabel}>Sholat Berikutnya:</Text>
+                  <Text style={styles.nextPrayerName}>{nextPrayer.name} - {nextPrayer.time}</Text>
+                </View>
+              )}
 
-      {/* Konten */}
-      <View style={styles.content}>
-        {nextPrayer && (
-          <View style={styles.nextPrayerContainer}>
-            <Text style={styles.nextPrayerLabel}>Sholat Berikutnya:</Text>
-            <View style={styles.nextPrayerInfo}>
-              <Text style={styles.nextPrayerName}>{nextPrayer.name}</Text>
-              <Text style={styles.nextPrayerTime}>{nextPrayer.time}</Text>
-            </View>
-          </View>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.prayerTimesScroll}
+              >
+                {Object.entries({
+                  'Subuh': prayerTimes?.fajr,
+                  'Dzuhur': prayerTimes?.dhuhr,
+                  'Ashar': prayerTimes?.asr,
+                  'Maghrib': prayerTimes?.maghrib,
+                  'Isya': prayerTimes?.isha,
+                }).map(([name, time], index) => {
+                  const isNext = nextPrayer?.name === name;
+                  return (
+                    <View 
+                      key={name} 
+                      style={[
+                        styles.prayerTimeItem,
+                        isNext && styles.prayerTimeItemActive
+                      ]}
+                    >
+                      <Text style={[
+                        styles.prayerName,
+                        isNext && styles.prayerNameActive
+                      ]}>
+                        {name}
+                      </Text>
+                      <Text style={[
+                        styles.prayerTime,
+                        isNext && styles.prayerTimeActive
+                      ]}>
+                        {time}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </LinearGradient>
+          </Animated.View>
         )}
 
-        <View style={styles.prayerTimesGrid}>
-          {Object.entries({
-            'Subuh': prayerTimes?.fajr,
-            'Dzuhur': prayerTimes?.dhuhr,
-            'Ashar': prayerTimes?.asr,
-            'Maghrib': prayerTimes?.maghrib,
-            'Isya': prayerTimes?.isha,
-          }).map(([name, time]) => (
-            <View key={name} style={styles.prayerTimeItem}>
-              <Text style={styles.prayerName}>{name}</Text>
-              <Text style={styles.prayerTime}>{time}</Text>
-            </View>
-          ))}
-        </View>
-
-        <Text style={styles.locationText}>{locationName}</Text>
-      </View>
-    </Animated.View>
-        )}
-
-        {/* Stats Cards */}
+        {/* Enhanced Stats Cards */}
         <Animated.View entering={FadeInUp.delay(200)} style={styles.statsContainer}>
           {profile?.role === 'siswa' && (
             <>
-              <View style={styles.statCard}>
-              <TrendingUp size={20} color="#0066CC" />
+              <View style={[styles.statCard, { borderLeftColor: '#3B82F6' }]}>
+                <TrendingUp size={24} color="#3B82F6" />
                 <Text style={styles.statNumber}>{stats.totalPoin || 0}</Text>
                 <Text style={styles.statLabel}>Total Poin</Text>
               </View>
-              <View style={styles.statCard}>
-               <BookOpen size={20} color="#00A86B" />
+              <View style={[styles.statCard, { borderLeftColor: '#10B981' }]}>
+                <BookOpen size={24} color="#10B981" />
                 <Text style={styles.statNumber}>{stats.setoranDiterima || 0}</Text>
                 <Text style={styles.statLabel}>Diterima</Text>
               </View>
-              <View style={styles.statCard}>
-             <Award size={20} color="#FF6B35" />
+              <View style={[styles.statCard, { borderLeftColor: '#F59E0B' }]}>
+                <Award size={24} color="#F59E0B" />
                 <Text style={styles.statNumber}>{stats.labelCount || 0}</Text>
                 <Text style={styles.statLabel}>Label Juz</Text>
               </View>
@@ -490,18 +507,18 @@ const handlePress = (link: string) => {
           
           {profile?.role === 'guru' && (
             <>
-              <View style={styles.statCard}>
-               <Clock size={20} color="#E74C3C" />
+              <View style={[styles.statCard, { borderLeftColor: '#EF4444' }]}>
+                <Clock size={24} color="#EF4444" />
                 <Text style={styles.statNumber}>{stats.setoranPending || 0}</Text>
                 <Text style={styles.statLabel}>Perlu Dinilai</Text>
               </View>
-              <View style={styles.statCard}>
-                <Users size={20} color="#0066CC" />
+              <View style={[styles.statCard, { borderLeftColor: '#3B82F6' }]}>
+                <Users size={24} color="#3B82F6" />
                 <Text style={styles.statNumber}>{stats.totalSiswa || 0}</Text>
                 <Text style={styles.statLabel}>Total Santri</Text>
               </View>
-              <View style={styles.statCard}>
-                <Award size={20} color="#00A86B" />
+              <View style={[styles.statCard, { borderLeftColor: '#10B981' }]}>
+                <Award size={24} color="#10B981" />
                 <Text style={styles.statNumber}>1</Text>
                 <Text style={styles.statLabel}>Kelas Aktif</Text>
               </View>
@@ -510,18 +527,18 @@ const handlePress = (link: string) => {
 
           {profile?.role === 'ortu' && (
             <>
-              <View style={styles.statCard}>
-           <TrendingUp size={20} color="#0066CC" />
+              <View style={[styles.statCard, { borderLeftColor: '#3B82F6' }]}>
+                <TrendingUp size={24} color="#3B82F6" />
                 <Text style={styles.statNumber}>{stats.totalPoin || 0}</Text>
                 <Text style={styles.statLabel}>Poin Anak</Text>
               </View>
-              <View style={styles.statCard}>
-                 <BookOpen size={20} color="#00A86B" />
+              <View style={[styles.statCard, { borderLeftColor: '#10B981' }]}>
+                <BookOpen size={24} color="#10B981" />
                 <Text style={styles.statNumber}>{stats.setoranDiterima || 0}</Text>
                 <Text style={styles.statLabel}>Diterima</Text>
               </View>
-              <View style={styles.statCard}>
-                <Clock size={20} color="#FF6B35" />
+              <View style={[styles.statCard, { borderLeftColor: '#F59E0B' }]}>
+                <Clock size={24} color="#F59E0B" />
                 <Text style={styles.statNumber}>{stats.setoranPending || 0}</Text>
                 <Text style={styles.statLabel}>Menunggu</Text>
               </View>
@@ -529,50 +546,55 @@ const handlePress = (link: string) => {
           )}
         </Animated.View>
 
-
-
         {/* Progress Cards for Students */}
         {profile?.role === 'siswa' && (
           <Animated.View entering={FadeInUp.delay(400)} style={styles.progressSection}>
             <Text style={styles.sectionTitle}>Progress Pembelajaran</Text>
             <View style={styles.progressCards}>
-              <View style={styles.progressCard}>
-                 <BookOpen size={20} color="#00A86B" />
+              <LinearGradient
+                colors={['#10B981', '#059669']}
+                style={styles.progressCard}
+              >
+                <BookOpen size={24} color="white" />
                 <Text style={styles.progressTitle}>Hafalan</Text>
                 <Text style={styles.progressNumber}>{stats.hafalanProgress || 0}</Text>
                 <Text style={styles.progressLabel}>Setoran Diterima</Text>
-              </View>
-              <View style={styles.progressCard}>
-                 <Target size={20} color="#0066CC" />
+              </LinearGradient>
+              <LinearGradient
+                colors={['#3B82F6', '#2563EB']}
+                style={styles.progressCard}
+              >
+                <Target size={24} color="white" />
                 <Text style={styles.progressTitle}>Murojaah</Text>
                 <Text style={styles.progressNumber}>{stats.murojaahProgress || 0}</Text>
                 <Text style={styles.progressLabel}>Setoran Diterima</Text>
-              </View>
+              </LinearGradient>
             </View>
           </Animated.View>
         )}
-   {/* Attendance Summary for Guru/Ortu */}
+
+        {/* Attendance Summary for Guru/Ortu */}
         {(profile?.role === 'guru' || profile?.role === 'ortu') && stats.attendanceStats && (
           <Animated.View entering={FadeInUp.delay(250)} style={styles.attendanceSection}>
             <Text style={styles.sectionTitle}>Absensi Hari Ini</Text>
             <View style={styles.attendanceCards}>
-              <View style={styles.attendanceCard}>
-                <Users size={20} color="#0066CC" />
+              <View style={[styles.attendanceCard, { borderLeftColor: '#3B82F6' }]}>
+                <Users size={20} color="#3B82F6" />
                 <Text style={styles.attendanceNumber}>{stats.attendanceStats.totalStudents}</Text>
                 <Text style={styles.attendanceLabel}>Total Siswa</Text>
               </View>
-              <View style={styles.attendanceCard}>
-                <CheckCircle size={20} color="#00A86B" />
+              <View style={[styles.attendanceCard, { borderLeftColor: '#10B981' }]}>
+                <CheckCircle size={20} color="#10B981" />
                 <Text style={styles.attendanceNumber}>{stats.attendanceStats.presentToday}</Text>
                 <Text style={styles.attendanceLabel}>Hadir</Text>
               </View>
-              <View style={styles.attendanceCard}>
-                <Clock size={20} color="#FF6B35" />
+              <View style={[styles.attendanceCard, { borderLeftColor: '#F59E0B' }]}>
+                <Clock size={20} color="#F59E0B" />
                 <Text style={styles.attendanceNumber}>{stats.attendanceStats.excusedToday}</Text>
                 <Text style={styles.attendanceLabel}>Izin</Text>
               </View>
-              <View style={styles.attendanceCard}>
-                <CircleX size={20} color="#E74C3C" />
+              <View style={[styles.attendanceCard, { borderLeftColor: '#EF4444' }]}>
+                <CircleX size={20} color="#EF4444" />
                 <Text style={styles.attendanceNumber}>{stats.attendanceStats.absentToday}</Text>
                 <Text style={styles.attendanceLabel}>Alpa</Text>
               </View>
@@ -582,10 +604,75 @@ const handlePress = (link: string) => {
               style={styles.viewAllAttendanceButton}
               onPress={() => router.push('/(tabs)/absensi')}
             >
-              <Text style={styles.viewAllAttendanceText}>Lihat Detail Absensi</Text>
+              <LinearGradient
+                colors={['#3B82F6', '#2563EB']}
+                style={styles.viewAllAttendanceGradient}
+              >
+                <Text style={styles.viewAllAttendanceText}>Lihat Detail Absensi</Text>
+                <ExternalLink size={16} color="white" />
+              </LinearGradient>
             </Pressable>
           </Animated.View>
         )}
+
+        {/* Enhanced Banner Ads */}
+        <Animated.View entering={FadeInUp.delay(300)} style={styles.bannerSection}>
+          <Text style={styles.sectionTitle}>Program Kebaikan</Text>
+          <FlatList
+            ref={flatListRef}
+            data={banners}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={width * 0.85}
+            decelerationRate="fast"
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            renderItem={({ item }) => (
+              <Pressable 
+                onPress={() => handleBannerPress(item.link)} 
+                style={styles.bannerCard}
+              >
+                <LinearGradient
+                  colors={item.gradient}
+                  style={styles.bannerGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <View style={styles.bannerContent}>
+                    <View style={styles.bannerTextContainer}>
+                      <Text style={styles.bannerTitle}>{item.title}</Text>
+                      <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
+                      <View style={styles.bannerButton}>
+                        <Text style={styles.bannerButtonText}>Donasi Sekarang</Text>
+                        <ExternalLink size={14} color="white" />
+                      </View>
+                    </View>
+                    <View style={styles.bannerImageContainer}>
+                      <Image source={{ uri: item.image }} style={styles.bannerImage} />
+                    </View>
+                  </View>
+                </LinearGradient>
+              </Pressable>
+            )}
+          />
+
+          <View style={styles.dotsContainer}>
+            {banners.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  { 
+                    backgroundColor: index === currentIndex ? '#3B82F6' : '#CBD5E1',
+                    width: index === currentIndex ? 24 : 8
+                  },
+                ]}
+              />
+            ))}
+          </View>
+        </Animated.View>
+
         {/* Recent Activity */}
         <Animated.View entering={FadeInUp.delay(500)} style={styles.section}>
           <Text style={styles.sectionTitle}>Aktivitas Terbaru</Text>
@@ -597,96 +684,63 @@ const handlePress = (link: string) => {
                   entering={SlideInRight.delay(index * 100)}
                   style={styles.activityCard}
                 >
-                  <View style={styles.activityIcon}>
-                    <BookOpen size={16} color="#00A86B" />
-                  </View>
-                  <View style={styles.activityInfo}>
-                    <Text style={styles.activityTitle}>
-                      {profile?.role === 'guru' ? 
-                        `${activity.siswa?.name} - ${activity.jenis === 'hafalan' ? 'Hafalan' : 'Murojaah'} ${activity.surah}` :
-                        `${activity.jenis === 'hafalan' ? 'Hafalan' : 'Murojaah'} ${activity.surah}`
-                      }
-                    </Text>
-                    <Text style={styles.activityDate}>
-                      {new Date(activity.tanggal || activity.created_at).toLocaleDateString('id-ID')}
-                    </Text>
-                  </View>
-                  <View style={[
-                    styles.activityStatus,
-                    { backgroundColor: activity.status === 'diterima' ? '#E8F5E8' : 
-                                     activity.status === 'pending' ? '#FFF3E0' : '#FFEBEE' }
-                  ]}>
-                    <Text style={[
-                      styles.activityStatusText,
-                     { color: activity.status === 'diterima' ? '#00A86B' : 
-                               activity.status === 'pending' ? '#FF6B35' : '#E74C3C' }
+                  <LinearGradient
+                    colors={['#F8FAFC', '#F1F5F9']}
+                    style={styles.activityGradient}
+                  >
+                    <View style={styles.activityIcon}>
+                      <BookOpen size={20} color="#3B82F6" />
+                    </View>
+                    <View style={styles.activityInfo}>
+                      <Text style={styles.activityTitle}>
+                        {profile?.role === 'guru' ? 
+                          `${activity.siswa?.name} - ${activity.jenis === 'hafalan' ? 'Hafalan' : 'Murojaah'} ${activity.surah}` :
+                          `${activity.jenis === 'hafalan' ? 'Hafalan' : 'Murojaah'} ${activity.surah}`
+                        }
+                      </Text>
+                      <Text style={styles.activityDate}>
+                        {new Date(activity.tanggal || activity.created_at).toLocaleDateString('id-ID')}
+                      </Text>
+                    </View>
+                    <View style={[
+                      styles.activityStatus,
+                      { backgroundColor: activity.status === 'diterima' ? '#DCFCE7' : 
+                                       activity.status === 'pending' ? '#FEF3C7' : '#FEE2E2' }
                     ]}>
-                      {activity.status === 'pending' ? 'Menunggu' : 
-                       activity.status === 'diterima' ? 'Diterima' : 'Ditolak'}
-                    </Text>
-                  </View>
+                      <Text style={[
+                        styles.activityStatusText,
+                        { color: activity.status === 'diterima' ? '#10B981' : 
+                                 activity.status === 'pending' ? '#F59E0B' : '#EF4444' }
+                      ]}>
+                        {activity.status === 'pending' ? 'Menunggu' : 
+                         activity.status === 'diterima' ? 'Diterima' : 'Ditolak'}
+                      </Text>
+                    </View>
+                  </LinearGradient>
                 </Animated.View>
               ))}
-              
             </View>
           ) : (
             <View style={styles.emptyActivity}>
-              <Calendar size={32} color="#9CA3AF" />
+              <Calendar size={48} color="#94A3B8" />
               <Text style={styles.emptyActivityText}>Belum ada aktivitas</Text>
             </View>
           )}
         </Animated.View>
-<Animated.View entering={FadeInUp.delay(100)} style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={banners}
-        keyExtractor={(item) => item.id}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={width * 0.7}
-        decelerationRate="fast"
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        renderItem={({ item }) => (
-          <Pressable onPress={() => handlePress(item.link)} style={styles.card}>
-            <Image source={{ uri: item.image }} style={styles.image} />
-            <View style={styles.textContainer}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.subtitle}>{item.subtitle}</Text>
-            </View>
-          </Pressable>
-        )}
-      />
 
-      {/* Pagination Dots */}
-      <View style={{...styles.dotsContainer, paddingBottom: 16}}>
-        {banners.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.dot,
-              { opacity: index === currentIndex ? 1 : 0.3 },
-            ]}
-          />
-        ))}
-      </View>
-
-      {/* Panah Navigasi */}
-      <TouchableOpacity style={[styles.arrow, { left: 10 }]} onPress={goToPrev}>
-        <Text style={styles.arrowText}>{'‹'}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.arrow, { right: 10 }]} onPress={goToNext}>
-        <Text style={styles.arrowText}>{'›'}</Text>
-      </TouchableOpacity>
-    </Animated.View>
         {/* Today's Quote */}
         <Animated.View entering={FadeInUp.delay(600)} style={styles.quoteCard}>
-         <Star size={20} color="#FF6B35" />
-          <Text style={styles.quoteText}>
-            "Dan sungguhnya telah Kami mudahkan Al-Quran untuk pelajaran, 
-            maka adakah orang yang mengambil pelajaran?"
-          </Text>
-          <Text style={styles.quoteSource}>- QS. Al-Qamar: 17</Text>
+          <LinearGradient
+            colors={['#F59E0B', '#F97316']}
+            style={styles.quoteGradient}
+          >
+            <Star size={24} color="white" />
+            <Text style={styles.quoteText}>
+              "Dan sungguhnya telah Kami mudahkan Al-Quran untuk pelajaran, 
+              maka adakah orang yang mengambil pelajaran?"
+            </Text>
+            <Text style={styles.quoteSource}>- QS. Al-Qamar: 17</Text>
+          </LinearGradient>
         </Animated.View>
       </View>
     </ScrollView>
@@ -697,20 +751,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
-    
-  },
-  header: {
- shadowColor: '#0066CC',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
   },
   headerGradient: {
     paddingBottom: 32,
     paddingHorizontal: 24,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
+    shadowColor: '#1E40AF',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
   },
   headerContent: {
     flexDirection: 'row',
@@ -724,70 +775,16 @@ const styles = StyleSheet.create({
     gap: 16,
     flex: 1,
   },
-   card: {
-    width: width * 0.9,
-    marginRight: 16,
-    backgroundColor: "white",
-    borderRadius: 16,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
-    marginBottom: 20 
-  },
-  image: {
-    width: "100%",
-    height: 160,
-    resizeMode: "cover",
-  },
-  textContainer: {
-    padding: 12,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#111",
-  },
-  subtitle: {
-    fontSize: 13,
-    color: "#555",
-    marginTop: 4,
-  },
-   dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#10B981',
-    marginHorizontal: 4,
-  },
-  arrow: {
-    position: 'absolute',
-    top: '40%',
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    padding: 6,
-    borderRadius: 20,
-  },
-  arrowText: {
-    fontSize: 24,
-    color: '#fff',
-  },
-  headerRight: {
-    alignItems: 'center',
-  },
   greetingContainer: {
     flex: 1,
   },
+  profileButton: {
+    alignItems: 'center',
+  },
   profilePicture: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -795,23 +792,23 @@ const styles = StyleSheet.create({
   },
   profileInitial: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   greeting: {
-    fontSize: Math.min(16, width * 0.04),
+    fontSize: 16,
     color: 'white',
     opacity: 0.9,
     fontWeight: '500',
   },
   userName: {
-    fontSize: Math.min(24, width * 0.06),
+    fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
     marginTop: 4,
   },
   userRole: {
-    fontSize: Math.min(14, width * 0.035),
+    fontSize: 14,
     color: 'white',
     opacity: 0.8,
     marginTop: 2,
@@ -821,123 +818,162 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: -24,
   },
-  bannerContainer: {
-    marginBottom: 20,
-  },
-  banner: {
-    borderRadius: 16  ,
-    padding: 20,
-      shadowColor: '#00A86B',
-    shadowOffset: { width: 0, height: 4 },
+  prayerCard: {
+    marginBottom: 24,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  bannerContent: {
+  prayerGradient: {
+    padding: 20,
+  },
+  prayerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  prayerTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 8,
   },
-  bannerIcon: {
-    width: 48,
-    height: 48,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bannerText: {
-    flex: 1,
-  },
-  bannerTitle: {
-    fontSize: 16,
+  prayerTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 4,
   },
-  bannerSubtitle: {
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  locationText: {
     fontSize: 14,
     color: 'white',
     opacity: 0.9,
   },
-   prayerTimesCard: {
+  nextPrayerBanner: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  nextPrayerLabel: {
+    fontSize: 12,
+    color: 'white',
+    opacity: 0.8,
+    marginBottom: 4,
+  },
+  nextPrayerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  prayerTimesScroll: {
+    marginHorizontal: -8,
+  },
+  prayerTimeItem: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 4,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  prayerTimeItemActive: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  prayerName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'white',
+    opacity: 0.8,
+    marginBottom: 4,
+  },
+  prayerNameActive: {
+    opacity: 1,
+    fontWeight: 'bold',
+  },
+  prayerTime: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  prayerTimeActive: {
+    fontSize: 16,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 20,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 5,
+    borderLeftWidth: 4,
   },
-  prayerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-    
-  prayerTitle: {
-    fontSize: 16,
+  statNumber: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#1E293B',
+    marginVertical: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#64748B',
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  progressSection: {
+    marginBottom: 24,
+  },
+  progressCards: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  progressCard: {
     flex: 1,
-    textAlign: 'center',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  nextPrayerContainer: {
-    marginBottom: 12,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: '#F0FDF4',
-  },
-  nextPrayerLabel: {
-    fontSize: 12,
-    color: '#16A34A',
-    marginBottom: 4,
-  },
-   nextPrayerInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-    nextPrayerName: {
+  progressTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#065F46',
+    color: 'white',
   },
-  nextPrayerTime: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#059669',
+  progressNumber: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',
   },
-   prayerTimesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-   prayerTimeItem: {
-    width: '48%',
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: '#ECFDF5',
-    marginBottom: 8,
-    alignItems: 'center',
-  },
-  prayerName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#064E3B',
-  },
-    prayerTime: {
-    fontSize: 14,
-    color: '#047857',
-  },
-  locationText: {
-    marginTop: 8,
+  progressLabel: {
     fontSize: 12,
-    color: '#7F8C8D',
+    color: 'white',
     textAlign: 'center',
+    fontWeight: '500',
+    opacity: 0.9,
   },
   attendanceSection: {
     marginBottom: 24,
@@ -951,158 +987,156 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
     borderRadius: 12,
-    padding: 12,
+    padding: 16,
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    borderLeftWidth: 4,
   },
   attendanceNumber: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#1E293B',
   },
   attendanceLabel: {
     fontSize: 10,
-    color: '#6B7280',
+    color: '#64748B',
     textAlign: 'center',
     fontWeight: '600',
   },
   viewAllAttendanceButton: {
-    backgroundColor: '#0066CC',
     borderRadius: 12,
-    padding: 12,
+    overflow: 'hidden',
+    shadowColor: '#3B82F6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  viewAllAttendanceGradient: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
   },
   viewAllAttendanceText: {
     color: 'white',
     fontSize: 14,
     fontWeight: '600',
   },
-  statsContainer: {
-    flexDirection: 'row',
-    gap: Math.max(12, width * 0.03),
+  bannerSection: {
     marginBottom: 24,
   },
-  statCard: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: Math.max(16, width * 0.04),
-    alignItems: 'center',
+  bannerCard: {
+    width: width * 0.85,
+    marginRight: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  statNumber: {
-    fontSize: Math.min(24, width * 0.06),
+  bannerGradient: {
+    padding: 20,
+    minHeight: 160,
+  },
+  bannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  bannerTextContainer: {
+    flex: 1,
+  },
+  bannerTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#1F2937',
-    marginVertical: 8,
+    color: 'white',
+    marginBottom: 8,
   },
-  statLabel: {
-    fontSize: Math.min(12, width * 0.03),
-    color: '#6B7280',
-    textAlign: 'center',
+  bannerSubtitle: {
+    fontSize: 14,
+    color: 'white',
+    opacity: 0.9,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  bannerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  bannerButtonText: {
+    color: 'white',
+    fontSize: 12,
     fontWeight: '600',
   },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 10,
-  },
-  quickActionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap", 
-    justifyContent: "space-between",
-  },
-  quickActionCard: {
+  bannerImageContainer: {
     width: 80,
-    alignItems: "center",
-    marginBottom: 20,
-    
+    height: 80,
+    borderRadius: 40,
+    overflow: 'hidden',
   },
-  quickActionIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25, // lingkaran penuh
-    alignItems: "center",
-    justifyContent: "center",
-  
+  bannerImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
-  quickActionText: {
-    marginTop: 6,
-    fontSize: 12,
-    textAlign: "center",
-    fontWeight: 'bold', 
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 16,
+    gap: 8,
   },
-
-
-  progressSection: {
+  dot: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#CBD5E1',
+  },
+  section: {
     marginBottom: 24,
   },
-  progressCards: {
-    flexDirection: 'row',
-    gap: Math.max(12, width * 0.03),
-  },
-  progressCard: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: Math.max(16, width * 0.04),
-    alignItems: 'center',
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  progressTitle: {
-    fontSize: Math.min(14, width * 0.035),
+  sectionTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#1F2937',
-  },
-  progressNumber: {
-    fontSize: Math.min(28, width * 0.07),
-    fontWeight: 'bold',
-     color: '#00A86B',
-  },
-  progressLabel: {
-    fontSize: Math.min(12, width * 0.03),
-    color: '#6B7280',
-    textAlign: 'center',
-    fontWeight: '500',
+    color: '#1E293B',
+    marginBottom: 16,
   },
   activityList: {
     gap: 12,
   },
   activityCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
   },
+  activityGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+  },
   activityIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-  backgroundColor: '#E8F5E8',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1110,41 +1144,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activityTitle: {
-    fontSize: Math.min(14, width * 0.035),
+    fontSize: 14,
     fontWeight: '600',
-    color: '#1F2937',
+    color: '#1E293B',
     lineHeight: 20,
   },
   activityDate: {
-    fontSize: Math.min(12, width * 0.03),
-    color: '#6B7280',
+    fontSize: 12,
+    color: '#64748B',
     marginTop: 2,
     fontWeight: '500',
   },
-  
   activityStatus: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   activityStatusText: {
-    fontSize: Math.min(12, width * 0.03),
+    fontSize: 12,
     fontWeight: '600',
   },
-    kubah: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    borderTopLeftRadius: 100,  // bikin kaya kubah
-    borderTopRightRadius: 100,
-  },
-
   emptyActivity: {
     backgroundColor: 'white',
     borderRadius: 16,
-    padding: 32,
+    padding: 40,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1153,36 +1176,39 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   emptyActivityText: {
-    fontSize: Math.min(14, width * 0.035),
-    color: '#6B7280',
-    marginTop: 12,
+    fontSize: 16,
+    color: '#64748B',
+    marginTop: 16,
     fontWeight: '500',
   },
   quoteCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 20,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  quoteGradient: {
     padding: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-    marginBottom: 20,
   },
   quoteText: {
-    fontSize: Math.min(16, width * 0.04),
-    color: '#1F2937',
+    fontSize: 16,
+    color: 'white',
     textAlign: 'center',
     fontStyle: 'italic',
     lineHeight: 24,
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: 16,
+    marginBottom: 12,
     fontWeight: '500',
   },
   quoteSource: {
-    fontSize: Math.min(14, width * 0.035),
-    color: '#6B7280',
+    fontSize: 14,
+    color: 'white',
     fontWeight: '600',
+    opacity: 0.9,
   },
 });
